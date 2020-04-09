@@ -1,9 +1,8 @@
 /* eslint-disable no-unused-vars */
-const assert = require('assert');
-//  Next.js API Routes behaves similar to Node HTTP Server
-const { createServer } = require('http');
-const request = require('supertest');
-const nextConnect = require('../lib');
+import assert from 'assert';
+import {createServer} from 'http';
+import request from 'supertest';
+import nextConnect from '../src';
 
 const METHODS = ['get', 'head', 'post', 'put', 'delete', 'options', 'trace', 'patch'];
 
@@ -94,7 +93,7 @@ describe('nextConnect', () => {
   context('apply()', () => {
     it('apply() should apply middleware to req and res', () => {
       handler.use((req, res, next) => { req.hello = 'world'; next(); });
-      const app = createServer(async (req, res, next) => {
+      const app = createServer(async (req: any, res) => {
         await handler.apply(req, res);
         res.end(req.hello || '');
       });
@@ -104,7 +103,7 @@ describe('nextConnect', () => {
       handler.use(() => {
         throw new Error('error');
       });
-      const app = createServer(async (req, res, next) => {
+      const app = createServer(async (req, res) => {
         try {
           await handler.apply(req, res);
           res.end('good');

@@ -1,4 +1,5 @@
-const Trouter = require('trouter');
+import Trouter from 'trouter';
+import http from 'http';
 
 function onerror(err, req, res) {
   res.statusCode = err.code || err.status || 500;
@@ -9,9 +10,12 @@ function isResSent(res) {
   return res.finished || res.headersSent || res.writableEnded;
 }
 
-module.exports = ({
+export = ({
   onError = onerror,
-  onNoMatch = onerror.bind(null, { code: 404, message: 'not found' }),
+  onNoMatch = onerror.bind(null, {code: 404, message: 'not found'}),
+}: {
+  onError?: (err: any, req: http.IncomingMessage, res: http.ServerResponse, next?: any) => void;
+  onNoMatch?: (req: http.IncomingMessage, res: http.ServerResponse) => void;
 } = {}) => {
   async function connect(req, res) {
     try {
@@ -25,7 +29,7 @@ module.exports = ({
   connect.routes = [];
   function add(...args) {
     if (typeof args[1] !== 'string') args.splice(1, 0, '*');
-    router.add.apply(connect, args);
+    router.add.apply(connect, args as any);
     return connect;
   }
   // method routing
@@ -58,7 +62,7 @@ module.exports = ({
   connect.handle = function handle(req, res, done) {
     let i = 0;
     const { handlers } = this.find(req.method, req.url);
-    async function next(err) {
+    async function next(err?: Error) {
       const handler = handlers[i];
       //  all done
       if (!handler) {
@@ -67,7 +71,7 @@ module.exports = ({
         try {
           if (!err) {
             i += 1;
-            handler(req, res, next);
+            await handler(req, res, next);
           } else onError(err, req, res, next);
         } catch (error) {
           next(error);
@@ -78,4 +82,4 @@ module.exports = ({
   };
 
   return connect;
-};
+}
